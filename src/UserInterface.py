@@ -12,12 +12,12 @@ class UserInterface:
 		self._term = Terminal()
 		self._is_playing = False
 		self.root_music = "Músicas"
-		self.expanded = True
+		self.expanded = False
 
 		# Obtém as músicas presentes em cada pasta
-		self.playlist  = self._get_playables()
+		self.playlist: dict  = self._get_playables()
 		# Salvará a ordenação de apresentação das músicas.
-		self.idx_order = self._calculate_specials()	
+		self.idx_order: dict = self._calculate_specials()	
 		# Iniciamos sempre na coluna de pastas, os seguintes se relacionam apenas com o texto
 		self.is_folder = True
 		self.idx_total_folder = 0
@@ -77,7 +77,7 @@ class UserInterface:
 		pp_special = lambda string="": print(self._term.italic(self._term.purple(string)), end="")  # Para o especial
 	
 		# Espaços que preencheremos ao redor da palavra
-		space_container = [10, 20]
+		space_container = [10, 20 if self.expanded else 39]
 
 		pp()
 
@@ -129,36 +129,64 @@ class UserInterface:
 
 				pp(f"|{folder.center(space_container[0], ' ')}|", end="")
 
+			if self.expanded:
 
-			pp(f"{('v' if len(self.playlist[folder]) else '<').center(space_container[1])}|")
-			pp(
-				f"+{'-' * length}+"
-			)
-
-			for file in self.playlist[folder]:
-
-				pp(f"|{' '.center(space_container[0])}|", end="")
-
-				if not self.is_folder and self.idx_total_folder == self.idx_folder_select:
-
-					if self.idx_total_file == self.idx_file_select:
-						# Vamos apresentar o especial
-
-						self.file_select = file
-						pp_special(file.center(space_container[1], " "))
-						pp("|")
-
-					else:
-						pp(f"{file.center(space_container[1], " ")}|")
-
-					self.idx_total_file += 1
-				else:
-
-					pp(f"{file.center(space_container[1], " ")}|")
-				
+				pp(f"{('v' if len(self.playlist[folder]) else '<').center(space_container[1])}|")
 				pp(
 					f"+{'-' * length}+"
 				)
+
+				for file in self.playlist[folder]:
+
+					pp(f"|{' '.center(space_container[0])}|", end="")
+
+					if not self.is_folder and self.idx_total_folder == self.idx_folder_select:
+
+						if self.idx_total_file == self.idx_file_select:
+							# Vamos apresentar o especial
+
+							self.file_select = file
+							pp_special(file.center(space_container[1], " "))
+							pp("|")
+
+						else:
+							pp(f"{file.center(space_container[1], " ")}|")
+
+						self.idx_total_file += 1
+					else:
+
+						pp(f"{file.center(space_container[1], " ")}|")
+					
+					pp(
+						f"+{'-' * length}+"
+					)
+			else:
+
+				# Devemos imprimir apenas a selecionada e colocar as adjacentes sombreadas.
+				if not len(self.playlist[folder]):
+					pp(f"{'<'.center(space_container[1], ' ')}|")
+				else:
+					# Garantimos que há algo a ser colocado
+					
+					files_list = [
+						self.playlist[folder][self.idx_order[folder] - 1] if self.idx_order[folder] != 0 else "",
+						self.playlist[folder][self.idx_order[folder]],
+						self.playlist[folder][self.idx_order[folder] + 1] if self.idx_order[folder]+1 != len(self.playlist[folder]) else ""
+					]
+
+					for index, file in enumerate(files_list):
+						if not self.is_folder and self.idx_total_folder == self.idx_folder_select and index == 1:
+							pp_special(f"{file.center(space_container[1] // 3, ' ')}")
+							self.file_select = file
+						else:
+							pp(f"{file.center(space_container[1] // 3, ' ')}", end="")
+
+					pp("|")
+
+				pp(
+					f"+{'-' * length}+"
+				)
+
 
 			self.idx_total_folder += 1
 
@@ -191,6 +219,16 @@ class UserInterface:
 						print(self._term.clear, end="")
 					else:
 						self.idx_file_select = (self.idx_file_select - 1) % self.idx_total_file
+
+				elif key.name == "KEY_RIGHT":
+
+					if not self.expanded:
+						self.idx_order[self.folder_select] = (self.idx_order[self.folder_select] + 1) % len(self.playlist[self.folder_select])
+
+				elif key.name == "KEY_LEFT":
+
+					if not self.expanded:
+						self.idx_order[self.folder_select] = (self.idx_order[self.folder_select] - 1) % len(self.playlist[self.folder_select])
 
 				elif key == " ":
 					# Caso a pasta não possua músicas
