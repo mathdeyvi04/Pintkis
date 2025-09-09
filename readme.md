@@ -1,8 +1,11 @@
 # Objetivo 
 
-Construção de um Reprodutor Musical eficiente e utilizável.
+Construção de um reprodutor musical eficiente e utilizável.
 
-- [Versão 1.0](Versão_1_0/README.md)
-- [Versão 2.0]()
+Já construimos este projeto diversas vezes. Entretanto, dessa vez planejamos:
 
+- Focado em Ambiente Linux
+- MultiThreading
+
+# Como Utilizar
 
