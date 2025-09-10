@@ -190,7 +190,6 @@ class UserInterface:
 
 			self.idx_total_folder += 1
 
-
 	## @brief Responsável por apresentar o menu e obter as interações
 	def mainloop(self):	
 
@@ -210,7 +209,8 @@ class UserInterface:
 					if self.is_folder:
 						self.idx_folder_select = (self.idx_folder_select + 1) % self.idx_total_folder
 					else:
-						self.idx_file_select = (self.idx_file_select + 1) % self.idx_total_file
+						if self.idx_total_file != 0:
+							self.idx_file_select = (self.idx_file_select + 1) % self.idx_total_file
 
 				elif key.name == "KEY_UP":
 					
@@ -218,14 +218,15 @@ class UserInterface:
 						self.idx_folder_select = (self.idx_folder_select - 1) % self.idx_total_folder
 						print(self._term.clear, end="")
 					else:
-						self.idx_file_select = (self.idx_file_select - 1) % self.idx_total_file
+						if self.idx_total_file != 0:
+							self.idx_file_select = (self.idx_file_select - 1) % self.idx_total_file
 
 				elif key.name == "KEY_RIGHT":
 
-					if not self.expanded:
+					if not self.expanded and not self.is_folder:
 						self.idx_order[self.folder_select] = (self.idx_order[self.folder_select] + 1) % len(self.playlist[self.folder_select])
 
-				elif key.name == "KEY_LEFT":
+				elif key.name == "KEY_LEFT" and not self.is_folder:
 
 					if not self.expanded:
 						self.idx_order[self.folder_select] = (self.idx_order[self.folder_select] - 1) % len(self.playlist[self.folder_select])
@@ -239,9 +240,7 @@ class UserInterface:
 					if not self.is_folder and len(self.playlist[self.folder_select]) == 0:
 						self.is_folder = True
 
-				self.draw_headers(False)
 				print(self._term.clear, end="")
-
 
 
 if __name__ == "__main__":
