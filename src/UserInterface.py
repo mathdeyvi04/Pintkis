@@ -13,7 +13,7 @@ class UserInterface:
 		self._term = Terminal()
 		self._is_playing = False
 		self.root_music = "Músicas"
-		self.expanded = False
+		self.mode_expanded = False
 
 		# Obtém as músicas presentes em cada pasta
 		self.playlist: dict  = self._get_playables()
@@ -82,7 +82,7 @@ class UserInterface:
 		pp_special = lambda string="": print(self._term.italic(self._term.purple(string)), end="")  # Para o especial
 	
 		# Espaços que preencheremos ao redor da palavra
-		space_container = [10, 20 if self.expanded else 39]
+		space_container = [10, 20 if self.mode_expanded else 39]
 
 		pp()
 
@@ -134,7 +134,7 @@ class UserInterface:
 
 				pp(f"|{folder.center(space_container[0], ' ')}|", end="")
 
-			if self.expanded:
+			if self.mode_expanded:
 
 				pp(f"{('v' if len(self.playlist[folder]) else '<').center(space_container[1])}|")
 				pp(
@@ -192,8 +192,13 @@ class UserInterface:
 					f"+{'-' * length}+"
 				)
 
-
 			self.idx_total_folder += 1
+
+	## @brief Responsável por apresentar configurações específicas
+	def draw_modes(self):
+		
+		print(self._term.seashell2(f"Repetições: {'infinity' if self.player.mode_infinity else 'one'} (TAB to change)"))
+
 
 	## @brief Responsável por apresentar o menu e obter as interações
 	def mainloop(self):	
@@ -206,6 +211,7 @@ class UserInterface:
 				self.draw_headers(True)
 
 				self.draw_playlist()
+				self.draw_modes()
 				key = self._term.inkey()
 
 				# Faremos o controle da interface
@@ -228,12 +234,12 @@ class UserInterface:
 
 				elif (key.name == "KEY_RIGHT" or key == "d") and not self.is_folder:
 
-					if not self.expanded and not self.is_folder:
+					if not self.mode_expanded and not self.is_folder:
 						self.idx_order[self.folder_select] = (self.idx_order[self.folder_select] + 1) % len(self.playlist[self.folder_select])
 
 				elif (key.name == "KEY_LEFT" or key == "a") and not self.is_folder:
 
-					if not self.expanded:
+					if not self.mode_expanded:
 						self.idx_order[self.folder_select] = (self.idx_order[self.folder_select] - 1) % len(self.playlist[self.folder_select])
 
 				elif key == " ":
@@ -261,6 +267,10 @@ class UserInterface:
 						self.player.resume()
 					else:
 						self.player.pause()
+
+				elif key.name == "KEY_TAB":
+
+					self.player.mode_infinity = not self.player.mode_infinity
 
 				print(self._term.clear, end="")
 

@@ -17,6 +17,8 @@ class Player:
 		self._is_running = th.Event()
 		self._paused = th.Event()
 		self._music_is_set = th.Event()
+		self.mode_infinity = True
+		self.forced_stop = False
 
 		self.is_equal_to_the_last_music = False
 		self.music_to_be_played = None
@@ -58,11 +60,13 @@ class Player:
 			# Colocamos a música para tocar
 			self.manager.play()
 
+			print("Coloquei para tocar...")
 			# Enquanto a música estiver tocando e a thread estiver ligada
 			while self.manager.get_busy() and self._is_running.is_set():
 
 				# Devemos fornecer a possibilidade de pause
 				if self._paused.is_set():
+
 					self.manager.pause()
 
 					while self._paused.is_set() and self._is_running.is_set():
@@ -79,6 +83,17 @@ class Player:
 				)
 				sleep(Player.TIME_DELAY)
 
+			# Se estamos no modo infinito e não foi uma parada forçada
+			# Então a música parou naturalmente e devemos iniciá-la de novo
+			if self.mode_infinity and not self.forced_stop:
+
+				self.is_equal_to_the_last_music = True
+				self._music_is_set.set()
+
+			# Independente se foi forçado, acabou
+			self.forced_stop = False
+
+
 
 	def set_music(self, music_desired: str):
 
@@ -87,6 +102,7 @@ class Player:
 
 			# Devemos interromper
 			self.manager.stop()
+			self.forced_stop = True
 
 		if self._paused.is_set():
 
@@ -94,8 +110,15 @@ class Player:
 			self._paused.clear()
 			# E parar a música que estava tocando
 			self.manager.stop() 
+			self.forced_stop = True
 
-		self.music_to_be_played = music_desired
+		# Apenas verificando se são iguais
+		if self.music_to_be_played == music_desired:
+			self.is_equal_to_the_last_music = True
+		else:
+			self.is_equal_to_the_last_music = False
+			self.music_to_be_played = music_desired
+
 		self._music_is_set.set()  # Deve ser a última linha dessa função
 
 	def start(self):
