@@ -1,6 +1,7 @@
 ## @file UserInterface.py
 ## @brief Agrupa as responsabilidades de comunicação usuário-sistema
 from blessed import Terminal
+from Player import Player
 import os
 
 class UserInterface:
@@ -27,6 +28,10 @@ class UserInterface:
 
 		self.folder_select = None
 		self.file_select = None
+
+		# Nosso reprodutor
+		self.player = Player()
+		self.player.start()
 
 		print(self._term.clear, end="")
 
@@ -204,7 +209,7 @@ class UserInterface:
 				key = self._term.inkey()
 
 				# Faremos o controle da interface
-				if key.name == "KEY_DOWN":
+				if key.name == "KEY_DOWN" or key == "s":
 
 					if self.is_folder:
 						self.idx_folder_select = (self.idx_folder_select + 1) % self.idx_total_folder
@@ -212,7 +217,7 @@ class UserInterface:
 						if self.idx_total_file != 0:
 							self.idx_file_select = (self.idx_file_select + 1) % self.idx_total_file
 
-				elif key.name == "KEY_UP":
+				elif key.name == "KEY_UP" or key == "w":
 					
 					if self.is_folder:
 						self.idx_folder_select = (self.idx_folder_select - 1) % self.idx_total_folder
@@ -221,12 +226,12 @@ class UserInterface:
 						if self.idx_total_file != 0:
 							self.idx_file_select = (self.idx_file_select - 1) % self.idx_total_file
 
-				elif key.name == "KEY_RIGHT":
+				elif (key.name == "KEY_RIGHT" or key == "d") and not self.is_folder:
 
 					if not self.expanded and not self.is_folder:
 						self.idx_order[self.folder_select] = (self.idx_order[self.folder_select] + 1) % len(self.playlist[self.folder_select])
 
-				elif key.name == "KEY_LEFT" and not self.is_folder:
+				elif (key.name == "KEY_LEFT" or key == "a") and not self.is_folder:
 
 					if not self.expanded:
 						self.idx_order[self.folder_select] = (self.idx_order[self.folder_select] - 1) % len(self.playlist[self.folder_select])
@@ -240,11 +245,29 @@ class UserInterface:
 					if not self.is_folder and len(self.playlist[self.folder_select]) == 0:
 						self.is_folder = True
 
-				print(self._term.clear, end="")
+				elif key.name == "KEY_ENTER":
 
+					if self.file_select is None:
+						print(self._term.clear, end="")
+						continue
+
+					self.player.set_music(
+										 os.path.join(self.root_music, self.folder_select, self.file_select + ".mp3")
+										 )
+
+				elif key == "p":
+
+					if self.player.is_paused():
+						self.player.resume()
+					else:
+						self.player.pause()
+
+				print(self._term.clear, end="")
 
 if __name__ == "__main__":
 	example = UserInterface()
 
 	example.mainloop()
+
+	example.player.stop()
 
