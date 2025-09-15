@@ -3,13 +3,14 @@
 from blessed import Terminal
 from Player import Player
 import os
+from shutil import rmtree
 
 class UserInterface:
+
 	## @brief Classe representadora da interface
 	def __init__(
 		self
 	):
-		
 		self._term = Terminal()
 		self._is_playing = False
 		self.root_music = "Músicas"
@@ -80,7 +81,8 @@ class UserInterface:
 		# Por conseguinte, ainda conseguimos definir a cor da tabela
 		pp = lambda string="", end="\n": print(self._term.seashell2(string), end=end)
 		pp_special = lambda string="": print(self._term.italic(self._term.purple(string)), end="")  # Para o especial
-	
+
+				
 		# Espaços que preencheremos ao redor da palavra
 		space_container = [10, 20 if self.mode_expanded else 39]
 
@@ -196,8 +198,49 @@ class UserInterface:
 
 	## @brief Responsável por apresentar configurações específicas
 	def draw_modes(self):
-		
-		print(self._term.seashell2(f"Repetições: {'infinity' if self.player.mode_infinity else 'one'} (TAB to change)"))
+
+		pp = lambda string="", end="\n": print(self._term.seashell2(string), end=end)
+		pp_special = lambda string="": print(self._term.italic(self._term.purple(string)), end="")  # Para o especial
+
+		pp(self._term.seashell2(f"Repetições: {'infinity' if self.player.mode_infinity else 'one'} (TAB to change)"))
+
+	def criar_remover_subplaylist(self, decisao: bool):
+
+		if decisao:
+			print("Nome da PLaylist: ", flush=True, end="")
+
+			folder_name = ""
+			while True:
+
+				key = self._term.inkey()
+
+				if key.name == "KEY_ENTER":
+					break 
+
+				elif key.name == "KEY_BACKSPACE":
+
+					if folder_name:
+						folder_name = folder_name[:-1]
+						print(self._term.move_left + " " + self._term.move_left, end="", flush=True)
+				else:
+					folder_name += key
+					print(key, end="", flush=True)
+
+			if folder_name:
+				os.makedirs(os.path.join(self.root_music, folder_name))
+				self.playlist: dict  = self._get_playables()
+				# Salvará a ordenação de apresentação das músicas.
+				self.idx_order: dict = self._calculate_specials()
+		else:
+
+			print(f"Deseja remover mesmo: {self.folder_select}?(ESC Nega)", flush=True, end="")
+
+			if not self._term.inkey().name == "KEY_ESC":
+				# Então removemos
+				rmtree(os.path.join(self.root_music, self.folder_select))
+				self.playlist: dict  = self._get_playables()
+				# Salvará a ordenação de apresentação das músicas.
+				self.idx_order: dict = self._calculate_specials()
 
 
 	## @brief Responsável por apresentar o menu e obter as interações
@@ -271,6 +314,21 @@ class UserInterface:
 				elif key.name == "KEY_TAB":
 
 					self.player.mode_infinity = not self.player.mode_infinity
+
+				elif key == "+":
+
+					if self.is_folder:
+						
+						self.criar_subplaylist(True)
+
+					else:
+						print(self._term.seashell2("fILE"))
+
+				elif key == "-":
+
+					if self.is_folder:
+
+						self.criar_remover_subplaylist(False)
 
 				print(self._term.clear, end="")
 

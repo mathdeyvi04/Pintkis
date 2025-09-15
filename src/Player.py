@@ -93,8 +93,6 @@ class Player:
 			# Independente se foi forçado, acabou
 			self.forced_stop = False
 
-
-
 	def set_music(self, music_desired: str):
 
 		# Caso ela estiver tocando
