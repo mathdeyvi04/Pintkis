@@ -7,5 +7,6 @@ Já construimos este projeto diversas vezes. Entretanto, dessa vez planejamos:
 - Focado em Ambiente Linux
 - MultiThreading
 
-# Como Utilizar
+# Caso Deseje Utilizar
 
+Há necessidade de instalar o `ffmpeg`.

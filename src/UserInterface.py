@@ -2,8 +2,10 @@
 ## @brief Agrupa as responsabilidades de comunicação usuário-sistema
 from blessed import Terminal
 from Player import Player
-import os
+from Downloader import Downloader
 from shutil import rmtree
+import os
+from time import sleep
 
 class UserInterface:
 
@@ -33,6 +35,9 @@ class UserInterface:
 		# Nosso reprodutor
 		self.player = Player()
 		self.player.start()
+
+		# Nosso downloader
+		self.downloader = Downloader()
 
 		print(self._term.clear, end="")
 
@@ -67,7 +72,7 @@ class UserInterface:
 	def draw_headers(
 		self,
 		switch_phase: bool
-	):
+	) -> None:
 		if switch_phase:
 			# Devemos apresentar o cabeçalho
 			print(self._term.gray60("-" * self._term.width))
@@ -76,7 +81,7 @@ class UserInterface:
 			print(self._term.gray60("-" * self._term.width))
 
 	## @brief Responsável por apresentar a playlist de forma satisfatória.
-	def draw_playlist(self):
+	def draw_playlist(self) -> None:
 
 		# Por conseguinte, ainda conseguimos definir a cor da tabela
 		pp = lambda string="", end="\n": print(self._term.seashell2(string), end=end)
@@ -197,14 +202,23 @@ class UserInterface:
 			self.idx_total_folder += 1
 
 	## @brief Responsável por apresentar configurações específicas
-	def draw_modes(self):
+	def draw_modes(self) -> None:
 
 		pp = lambda string="", end="\n": print(self._term.seashell2(string), end=end)
 		pp_special = lambda string="": print(self._term.italic(self._term.purple(string)), end="")  # Para o especial
 
 		pp(self._term.seashell2(f"Repetições: {'infinity' if self.player.mode_infinity else 'one'} (TAB to change)"))
 
-	def criar_remover_subplaylist(self, decisao: bool):
+	def draw_bar_progress(self) -> None:
+
+		spinner = ["/", "-", "\\", "|"]
+		idx = 0
+		width = 50
+
+		# Adicionamos a lógica a seguir
+
+
+	def criar_remover_subplaylist(self, decisao: bool) -> None:
 
 		if decisao:
 			print("Nome da PLaylist: ", flush=True, end="")
@@ -214,8 +228,11 @@ class UserInterface:
 
 				key = self._term.inkey()
 
-				if key.name == "KEY_ENTER":
+				if key.name == "KEY_ENTER" and folder_name:
 					break 
+
+				elif key.name == "KEY_ESCAPE":
+					return None
 
 				elif key.name == "KEY_BACKSPACE":
 
@@ -224,7 +241,7 @@ class UserInterface:
 						print(self._term.move_left + " " + self._term.move_left, end="", flush=True)
 				else:
 					folder_name += key
-					print(key, end="", flush=True)
+					print(key.name, end="", flush=True)
 
 			if folder_name:
 				os.makedirs(os.path.join(self.root_music, folder_name))
@@ -235,12 +252,66 @@ class UserInterface:
 
 			print(f"Deseja remover mesmo: {self.folder_select}?(ESC Nega)", flush=True, end="")
 
-			if not self._term.inkey().name == "KEY_ESC":
+			if not self._term.inkey().name == "KEY_ESCAPE":
 				# Então removemos
 				rmtree(os.path.join(self.root_music, self.folder_select))
 				self.playlist: dict  = self._get_playables()
 				# Salvará a ordenação de apresentação das músicas.
 				self.idx_order: dict = self._calculate_specials()
+
+	def baixar_musica(self) -> None:
+
+		print("Insira o link: ", end="", flush=True)
+		link = ""
+		while True:
+
+			key = self._term.inkey()
+
+			if key.name == "KEY_ENTER" and link:
+				break
+
+			elif key.name == "KEY_ESCAPE":
+				return None
+
+			elif key.name == "KEY_BACKSPACE":
+				if link:
+					link = link[:-1]
+					print(self._term.move_left + " " + self._term.move_left, end="", flush=True)
+
+			else:
+				link += key 
+				print(key, end="", flush=True)
+
+		print(flush=True)
+		print("Insira o nome: ", end="", flush=True)
+		nome = ""
+		while True:
+			key = self._term.inkey()
+
+			if key.name == "KEY_ENTER" and nome:
+				break
+
+			elif key.name == "KEY_ESCAPE":
+				return None
+
+			elif key.name == "KEY_BACKSPACE":
+				if nome:
+					nome = nome[:-1]
+					print(self._term.move_left + " " + self._term.move_left, end="", flush=True)
+
+			else:
+				nome += key 
+				print(key, end="", flush=True)
+
+		print(flush=True)
+
+		# self.downloader.baixar(
+		# 						link,
+		# 						os.path.join(self.root_music, self.folder_select, nome)
+		# 					  )
+
+		self.draw_bar_progress()
+
 
 
 	## @brief Responsável por apresentar o menu e obter as interações
@@ -319,10 +390,10 @@ class UserInterface:
 
 					if self.is_folder:
 						
-						self.criar_subplaylist(True)
+						self.criar_remover_subplaylist(True)
 
 					else:
-						print(self._term.seashell2("fILE"))
+						self.baixar_musica()
 
 				elif key == "-":
 
