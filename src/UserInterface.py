@@ -4,8 +4,9 @@ from blessed import Terminal
 from Player import Player
 from Downloader import Downloader
 from shutil import rmtree
-import os
 from time import sleep
+from tqdm import tqdm
+import os
 
 class UserInterface:
 
@@ -211,11 +212,18 @@ class UserInterface:
 
 	def draw_bar_progress(self) -> None:
 
-		spinner = ["/", "-", "\\", "|"]
-		idx = 0
-		width = 50
+		with tqdm(total=100) as pbar:
 
-		# Adicionamos a lógica a seguir
+			print("Baixando...  ", flush=True, end="")
+ 
+			while self.downloader.progress < 100:
+				sleep(0.5)
+
+			self.downloader.progress = 0
+			self.downloader.cancell()
+			self.playlist: dict  = self._get_playables()
+			# Salvará a ordenação de apresentação das músicas.
+			self.idx_order: dict = self._calculate_specials()	
 
 
 	def criar_remover_subplaylist(self, decisao: bool) -> None:
@@ -305,17 +313,15 @@ class UserInterface:
 
 		print(flush=True)
 
-		# self.downloader.baixar(
-		# 						link,
-		# 						os.path.join(self.root_music, self.folder_select, nome)
-		# 					  )
+		self.downloader.baixar(
+								link,
+								os.path.join(self.root_music, self.folder_select, nome)
+							  )
 
 		self.draw_bar_progress()
 
-
-
 	## @brief Responsável por apresentar o menu e obter as interações
-	def mainloop(self):	
+	def mainloop(self) -> None:	
 
 		with self._term.cbreak(), self._term.hidden_cursor():
 
@@ -400,6 +406,11 @@ class UserInterface:
 					if self.is_folder:
 
 						self.criar_remover_subplaylist(False)
+
+					else:
+
+						# Precisamos remover a música
+												
 
 				print(self._term.clear, end="")
 

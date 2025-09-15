@@ -20,9 +20,16 @@ venv:
 # Para adicionarmos e atualizar posteriores bibliotecas
 add:
 ifndef LIB
-	$(error Deve escrever LIB=<nome_da_lib>)
+	$(error, deve escrever LIB=<nome_da_lib>)
 endif
 	@$(PIP) install $(LIB);
+	@$(PIP) freeze > $(REQ);
+
+remove:
+ifndef LIB
+	$(error, deve escrever LIB=<nome_da_lib>)
+endif
+	@$(PIP) uninstall $(LIB);
 	@$(PIP) freeze > $(REQ);
 
 
